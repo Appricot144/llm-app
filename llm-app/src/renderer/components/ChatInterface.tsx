@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { PaperAirplaneIcon, PaperClipIcon } from "@phosphor-icons";
+import { PaperPlane, Paperclip } from "@phosphor-icons/react";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -97,7 +97,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const filePaths = Array.from(files).map((file) => file.path);
+      const filePaths = Array.from(files).map((file) => file.name);
       setAttachedFiles((prev) => [...prev, ...filePaths]);
     }
     e.target.value = "";
@@ -195,7 +195,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             disabled={disabled || isLoading}
             className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
           >
-            <PaperClipIcon size={20} />
+            <Paperclip size={20} />
           </button>
 
           <div className="flex-1">
@@ -218,7 +218,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             disabled={disabled || isLoading || !inputMessage.trim()}
             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500"
           >
-            <PaperAirplaneIcon size={20} />
+            <PaperPlane size={20} />
           </button>
         </div>
 
