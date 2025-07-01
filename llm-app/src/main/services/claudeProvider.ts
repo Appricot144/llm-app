@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ChatMessage, ApiProvider, ChatError } from './types';
-import { ClaudeConfig } from '../config/types';
-import * as fs from 'fs';
-import * as path from 'path';
+import Anthropic from "@anthropic-ai/sdk";
+import { ChatMessage, ApiProvider, ChatError } from "./types";
+import { ClaudeConfig } from "../config/types";
+import * as fs from "fs";
+import * as path from "path";
 
 export class ClaudeProvider implements ApiProvider {
   private client: Anthropic | null = null;
@@ -13,7 +13,10 @@ export class ClaudeProvider implements ApiProvider {
 
   private initializeClient(): void {
     if (!this.config.anthropicApiKey) {
-      throw new ChatError('Anthropic APIキーが設定されていません', 'API_KEY_MISSING');
+      throw new ChatError(
+        "Anthropic APIキーが設定されていません",
+        "API_KEY_MISSING"
+      );
     }
 
     this.client = new Anthropic({
@@ -26,7 +29,9 @@ export class ClaudeProvider implements ApiProvider {
     this.initializeClient();
   }
 
-  private async processFileAttachments(filePaths: string[]): Promise<Array<{ type: string; source: any }>> {
+  private async processFileAttachments(
+    filePaths: string[]
+  ): Promise<Array<{ type: string; source: any }>> {
     const attachments: Array<{ type: string; source: any }> = [];
 
     for (const filePath of filePaths) {
@@ -43,28 +48,30 @@ export class ClaudeProvider implements ApiProvider {
         }
 
         const ext = path.extname(filePath).toLowerCase();
-        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+        const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
         if (imageExtensions.includes(ext)) {
           const imageData = fs.readFileSync(filePath);
-          const base64Data = imageData.toString('base64');
+          const base64Data = imageData.toString("base64");
           const mimeType = this.getMimeType(ext);
 
           attachments.push({
-            type: 'image',
+            type: "image",
             source: {
-              type: 'base64',
+              type: "base64",
               media_type: mimeType,
               data: base64Data,
             },
           });
         } else {
-          const textContent = fs.readFileSync(filePath, 'utf-8');
+          const textContent = fs.readFileSync(filePath, "utf-8");
           attachments.push({
-            type: 'text',
+            type: "text",
             source: {
-              type: 'text',
-              text: `ファイル: ${path.basename(filePath)}\n\`\`\`\n${textContent}\n\`\`\``,
+              type: "text",
+              text: `ファイル: ${path.basename(
+                filePath
+              )}\n\`\`\`\n${textContent}\n\`\`\``,
             },
           });
         }
@@ -78,41 +85,46 @@ export class ClaudeProvider implements ApiProvider {
 
   private getMimeType(extension: string): string {
     const mimeTypes: { [key: string]: string } = {
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp',
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
     };
-    return mimeTypes[extension] || 'application/octet-stream';
+    return mimeTypes[extension] || "application/octet-stream";
   }
 
   public async sendMessage(
     messages: ChatMessage[]
   ): Promise<{ content: string; tokenCount: number }> {
     if (!this.client) {
-      throw new ChatError('Claudeクライアントが初期化されていません', 'CLIENT_NOT_INITIALIZED');
+      throw new ChatError(
+        "Claudeクライアントが初期化されていません",
+        "CLIENT_NOT_INITIALIZED"
+      );
     }
 
     try {
       const claudeMessages: Array<any> = [];
 
       for (const message of messages) {
-        if (message.role === 'user') {
-          const content: Array<any> = [{ type: 'text', text: message.content }];
+        if (message.role === "user") {
+          const content: Array<any> = [{ type: "text", text: message.content }];
 
           if (message.filePaths && message.filePaths.length > 0) {
-            const attachments = await this.processFileAttachments(message.filePaths);
+            const attachments = await this.processFileAttachments(
+              message.filePaths
+            );
             content.push(...attachments);
           }
 
           claudeMessages.push({
-            role: 'user',
+            role: "user",
             content,
           });
         } else {
           claudeMessages.push({
-            role: 'assistant',
+            role: "assistant",
             content: message.content,
           });
         }
@@ -126,13 +138,13 @@ export class ClaudeProvider implements ApiProvider {
       });
 
       if (!response.content || response.content.length === 0) {
-        throw new ChatError('Claudeからの応答が空です', 'EMPTY_RESPONSE');
+        throw new ChatError("Claudeからの応答が空です", "EMPTY_RESPONSE");
       }
 
       const textContent = response.content
-        .filter((block: any) => block.type === 'text')
+        .filter((block: any) => block.type === "text")
         .map((block: any) => block.text)
-        .join('');
+        .join("");
 
       return {
         content: textContent,
@@ -142,13 +154,15 @@ export class ClaudeProvider implements ApiProvider {
       if (error instanceof Anthropic.APIError) {
         throw new ChatError(
           `Claude API エラー: ${error.message}`,
-          'CLAUDE_API_ERROR',
+          "CLAUDE_API_ERROR",
           error.status
         );
       }
       throw new ChatError(
-        `メッセージ送信エラー: ${error instanceof Error ? error.message : String(error)}`,
-        'SEND_MESSAGE_ERROR'
+        `メッセージ送信エラー: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        "SEND_MESSAGE_ERROR"
       );
     }
   }
