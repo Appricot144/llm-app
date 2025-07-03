@@ -1,15 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
-import * as fs from 'fs';
-import * as path from 'path';
-import { configManager } from '../config/appConfig';
-import { ClaudeProvider } from './claudeProvider';
+import { v4 as uuidv4 } from "uuid";
+import * as fs from "fs";
+import * as path from "path";
+import { configManager } from "../config/appConfig";
+import { ClaudeProvider } from "./claudeProvider";
 import {
   ChatMessage,
   ChatSession,
   SendMessageRequest,
   SendMessageResponse,
   ChatError,
-} from './types';
+} from "./types";
 
 export class ChatService {
   private claudeProvider: ClaudeProvider | null = null;
@@ -21,7 +21,7 @@ export class ChatService {
 
   private initializeProviders(): void {
     const config = configManager.getConfig();
-    
+
     if (config.claude.anthropicApiKey) {
       this.claudeProvider = new ClaudeProvider(config.claude);
     }
@@ -35,7 +35,7 @@ export class ChatService {
     const sessionId = uuidv4();
     const session: ChatSession = {
       id: sessionId,
-      title: title || 'New Chat',
+      title: title || "New Chat",
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -48,30 +48,30 @@ export class ChatService {
 
   private generateSessionTitle(message: string): string {
     const maxLength = 50;
-    const cleanMessage = message.replace(/\s+/g, ' ').trim();
-    
+    const cleanMessage = message.replace(/\s+/g, " ").trim();
+
     if (cleanMessage.length <= maxLength) {
       return cleanMessage;
     }
-    
-    return cleanMessage.substring(0, maxLength - 3) + '...';
+
+    return cleanMessage.substring(0, maxLength - 3) + "...";
   }
 
   private async loadContextFile(contextFilePath?: string): Promise<string> {
     if (!contextFilePath) {
-      return '';
+      return "";
     }
 
     try {
       if (fs.existsSync(contextFilePath)) {
-        const contextContent = fs.readFileSync(contextFilePath, 'utf-8');
+        const contextContent = fs.readFileSync(contextFilePath, "utf-8");
         return `プロジェクトコンテキスト:\n${contextContent}\n\n`;
       }
     } catch (error) {
-      console.warn('コンテキストファイルの読み込みに失敗しました:', error);
+      console.warn("コンテキストファイルの読み込みに失敗しました:", error);
     }
 
-    return '';
+    return "";
   }
 
   private async processMessage(
@@ -88,13 +88,15 @@ export class ChatService {
 
     if (filePaths.length > 0) {
       const fileContents: string[] = [];
-      
+
       for (const filePath of filePaths) {
         try {
           if (fs.existsSync(filePath)) {
-            const content = fs.readFileSync(filePath, 'utf-8');
+            const content = fs.readFileSync(filePath, "utf-8");
             const fileName = path.basename(filePath);
-            fileContents.push(`ファイル: ${fileName}\n\`\`\`\n${content}\n\`\`\``);
+            fileContents.push(
+              `ファイル: ${fileName}\n\`\`\`\n${content}\n\`\`\``
+            );
           }
         } catch (error) {
           console.warn(`ファイル読み込みエラー: ${filePath}`, error);
@@ -102,16 +104,21 @@ export class ChatService {
       }
 
       if (fileContents.length > 0) {
-        processedMessage += '\n\n' + fileContents.join('\n\n');
+        processedMessage += "\n\n" + fileContents.join("\n\n");
       }
     }
 
     return processedMessage;
   }
 
-  public async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
+  public async sendMessage(
+    request: SendMessageRequest
+  ): Promise<SendMessageResponse> {
     if (!this.claudeProvider) {
-      throw new ChatError('Claude APIが設定されていません', 'PROVIDER_NOT_CONFIGURED');
+      throw new ChatError(
+        "Claude APIが設定されていません",
+        "PROVIDER_NOT_CONFIGURED"
+      );
     }
 
     try {
@@ -120,7 +127,10 @@ export class ChatService {
       if (request.sessionId) {
         session = this.sessions.get(request.sessionId);
         if (!session) {
-          throw new ChatError('セッションが見つかりません', 'SESSION_NOT_FOUND');
+          throw new ChatError(
+            "セッションが見つかりません",
+            "SESSION_NOT_FOUND"
+          );
         }
       } else {
         const title = this.generateSessionTitle(request.message);
@@ -134,7 +144,7 @@ export class ChatService {
       );
 
       const userMessage: ChatMessage = {
-        role: 'user',
+        role: "user",
         content: processedMessage,
         filePaths: request.filePaths,
         timestamp: new Date(),
@@ -145,7 +155,7 @@ export class ChatService {
       const response = await this.claudeProvider.sendMessage(messages);
 
       const assistantMessage: ChatMessage = {
-        role: 'assistant',
+        role: "assistant",
         content: response.content,
         timestamp: new Date(),
         tokenCount: response.tokenCount,
@@ -166,8 +176,10 @@ export class ChatService {
         throw error;
       }
       throw new ChatError(
-        `メッセージ送信に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
-        'SEND_MESSAGE_FAILED'
+        `メッセージ送信に失敗しました: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        "SEND_MESSAGE_FAILED"
       );
     }
   }
